@@ -1,5 +1,17 @@
 import { PodiumError } from './errors.js';
-import type { HealthResponse, Json, QualityProfileQuery, SettingsResponse } from './types.js';
+import type {
+  ApplyRequest,
+  GroupPatternRequest,
+  GroupUpdateRequest,
+  HealthResponse,
+  Json,
+  OrderingRequest,
+  PreviewRequest,
+  QualityProfileQuery,
+  RefreshScope,
+  RulesRequest,
+  SettingsResponse,
+} from './types.js';
 
 export interface PodiumClientOptions {
   baseUrl: string;
@@ -113,5 +125,68 @@ export class PodiumClient {
   }
   teamarrStatus(): Promise<Json> {
     return this.request('GET', '/api/teamarr-sync');
+  }
+
+  // ---- writes ----
+  queueRefresh(scope: RefreshScope, groupId?: number): Promise<Json> {
+    const json: Json = { scope };
+    if (scope === 'group') json.groupId = groupId;
+    return this.request('POST', '/api/refresh', { json });
+  }
+  cancelRefresh(scope: RefreshScope, groupId?: number): Promise<Json> {
+    return this.request('DELETE', '/api/refresh', {
+      query: { scope, groupId: scope === 'group' ? groupId : undefined },
+    });
+  }
+  preview(body: PreviewRequest): Promise<Json> {
+    return this.request('POST', '/api/preview', { json: body });
+  }
+  checkChannel(channelId: number, force = false): Promise<Json> {
+    return this.request('POST', `/api/check/${channelId}`, {
+      query: { force: force ? true : undefined },
+      json: {},
+    });
+  }
+  applyOrdering(channelId: number, body: ApplyRequest): Promise<Json> {
+    return this.request('POST', `/api/apply/${channelId}`, { json: body });
+  }
+  unassignStream(channelId: number, streamId: number): Promise<Json> {
+    return this.request('POST', `/api/unassign/${channelId}`, { json: { streamId } });
+  }
+  saveRules(channelId: number, body: RulesRequest): Promise<Json> {
+    return this.request('PUT', `/api/rules/${channelId}`, { json: body });
+  }
+  clearRulePatterns(channelId: number): Promise<Json> {
+    return this.request('DELETE', `/api/rules/${channelId}/patterns`);
+  }
+  setGroup(groupId: number, body: GroupUpdateRequest): Promise<Json> {
+    return this.request('PUT', `/api/groups/${groupId}`, { json: body });
+  }
+  setGroupPattern(body: GroupPatternRequest): Promise<Json> {
+    return this.request('PUT', '/api/group-patterns', { json: body });
+  }
+  setOrdering(body: OrderingRequest): Promise<Json> {
+    return this.request('PUT', '/api/ordering', { json: body });
+  }
+  uploadRules(rulesText: string): Promise<Json> {
+    return this.request('POST', '/api/rule-check', { text: rulesText });
+  }
+  testSettings(values: Record<string, unknown>): Promise<Json> {
+    return this.request('POST', '/api/settings/test', { json: values });
+  }
+  saveSettings(values: Record<string, unknown>): Promise<Json> {
+    return this.request('PUT', '/api/settings', { json: values });
+  }
+  teamarrSync(dryRun: boolean): Promise<Json> {
+    return this.request('POST', '/api/teamarr-sync', { query: { dryRun: dryRun ? 1 : undefined } });
+  }
+  teamarrSyncTest(): Promise<Json> {
+    return this.request('POST', '/api/teamarr-sync/test');
+  }
+  restoreBackup(backup: unknown): Promise<Json> {
+    return this.request('POST', '/api/backup', { json: backup });
+  }
+  resetState(): Promise<Json> {
+    return this.request('POST', '/api/state/reset');
   }
 }
