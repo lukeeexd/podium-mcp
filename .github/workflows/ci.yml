@@ -58,7 +58,15 @@ jobs:
       pull-requests: write
     steps:
       - name: Merge Dependabot PR
-        run: gh pr merge --merge --delete-branch "$PR_URL"
+        # Several Dependabot PRs often finish CI together; GitHub rejects a merge
+        # if the base moved mid-request. Retry a few times before giving up.
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if gh pr merge --merge --delete-branch "$PR_URL"; then exit 0; fi
+            echo "merge attempt $attempt failed; retrying in 20s"
+            sleep 20
+          done
+          echo "could not merge after 5 attempts"; exit 1
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
