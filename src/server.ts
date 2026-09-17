@@ -7,6 +7,8 @@ import { registerGroupTools } from './tools/groups.js';
 import { registerOrderingTools } from './tools/ordering.js';
 import { registerRefreshTools } from './tools/refresh.js';
 import { registerRulesTools } from './tools/rules.js';
+import { registerSettingsTools } from './tools/settings.js';
+import { registerTeamarrTools } from './tools/teamarr.js';
 
 export interface ToolContext {
   client: PodiumClient;
@@ -23,6 +25,8 @@ const registrars: ToolRegistrar[] = [
   registerRulesTools,
   registerGroupTools,
   registerOrderingTools,
+  registerSettingsTools,
+  registerTeamarrTools,
 ];
 
 export const SERVER_INFO = { name: 'podium-mcp', version: '0.1.0' } as const;
