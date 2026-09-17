@@ -1,4 +1,5 @@
 import { PodiumError } from './errors.js';
+import type { HealthResponse, Json, QualityProfileQuery, SettingsResponse } from './types.js';
 
 export interface PodiumClientOptions {
   baseUrl: string;
@@ -61,5 +62,56 @@ export class PodiumClient {
     } catch {
       return { raw } as T;
     }
+  }
+
+  // ---- reads ----
+  health(): Promise<HealthResponse> {
+    return this.request('GET', '/api/health');
+  }
+  stats(): Promise<Json> {
+    return this.request('GET', '/api/stats');
+  }
+  progress(): Promise<Json> {
+    return this.request('GET', '/api/progress');
+  }
+  dead(): Promise<Json> {
+    return this.request('GET', '/api/dead');
+  }
+  state(refresh = false): Promise<Json> {
+    return this.request('GET', '/api/state', { query: { refresh: refresh ? 1 : undefined } });
+  }
+  searchStreams(query: string): Promise<Json> {
+    return this.request('GET', '/api/streams', { query: { q: query } });
+  }
+  streamGroups(): Promise<Json> {
+    return this.request('GET', '/api/stream-groups');
+  }
+  getOrdering(): Promise<Json> {
+    return this.request('GET', '/api/ordering');
+  }
+  qualityProfile(q: QualityProfileQuery): Promise<Json> {
+    return this.request('GET', '/api/quality-profile', {
+      query: {
+        minSamples: q.minSamples,
+        eventOnly: q.eventOnly === undefined ? undefined : q.eventOnly ? 1 : 0,
+        include: q.include,
+        exclude: q.exclude,
+      },
+    });
+  }
+  ruleStatus(): Promise<Json> {
+    return this.request('GET', '/api/rule-check');
+  }
+  nameNoise(query?: string): Promise<Json> {
+    return this.request('GET', '/api/name-noise', { query: { q: query } });
+  }
+  getSettings(): Promise<SettingsResponse> {
+    return this.request('GET', '/api/settings');
+  }
+  backup(): Promise<Json> {
+    return this.request('GET', '/api/backup');
+  }
+  teamarrStatus(): Promise<Json> {
+    return this.request('GET', '/api/teamarr-sync');
   }
 }
