@@ -4,7 +4,7 @@ import type { Server } from 'node:http';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { startHttp } from '../src/transport/http.js';
+import { createHttpApp, startHttp } from '../src/transport/http.js';
 import { buildServer } from '../src/server.js';
 import { mockClient, testConfig } from './helpers.js';
 
@@ -73,5 +73,57 @@ describe('http transport', () => {
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
     });
     expect(res.status).toBe(400);
+  });
+  it('rejects /mcp with a wrong bearer token', async () => {
+    const base = await start('secret');
+    const res = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+        authorization: 'Bearer wrong',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('sweeps idle sessions so an abandoned session id stops working', async () => {
+    const client = mockClient();
+    const cfg = testConfig();
+    const app = createHttpApp({ buildServer: () => buildServer(client, cfg), sessionTtlMs: 50 });
+    server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, () => resolve(s));
+    });
+    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+
+    const init = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '0' } },
+      }),
+    });
+    expect(init.status).toBe(200);
+    const sid = init.headers.get('mcp-session-id');
+    expect(sid).toBeTruthy();
+    await init.body?.cancel();
+
+    // Force every session past its TTL without waiting on the wall clock.
+    app.sweepSessions(Date.now() + 10_000);
+
+    const after = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+        'mcp-session-id': sid as string,
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+    });
+    expect(after.status).toBe(400);
   });
 });
