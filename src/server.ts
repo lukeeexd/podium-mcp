@@ -3,6 +3,7 @@ import type { Config } from './config.js';
 import type { PodiumClient } from './podium/client.js';
 import { registerReadTools } from './tools/read.js';
 import { registerChannelTools } from './tools/channels.js';
+import { registerDangerousTools } from './tools/dangerous.js';
 import { registerGroupTools } from './tools/groups.js';
 import { registerOrderingTools } from './tools/ordering.js';
 import { registerRefreshTools } from './tools/refresh.js';
@@ -27,6 +28,7 @@ const registrars: ToolRegistrar[] = [
   registerOrderingTools,
   registerSettingsTools,
   registerTeamarrTools,
+  registerDangerousTools,
 ];
 
 export const SERVER_INFO = { name: 'podium-mcp', version: '0.1.0' } as const;
