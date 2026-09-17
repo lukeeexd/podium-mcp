@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Config } from './config.js';
 import type { PodiumClient } from './podium/client.js';
+import { registerReadTools } from './tools/read.js';
 
 export interface ToolContext {
   client: PodiumClient;
@@ -10,7 +11,7 @@ export interface ToolContext {
 export type ToolRegistrar = (server: McpServer, ctx: ToolContext) => void;
 
 // Tool groups are appended here by later tasks.
-const registrars: ToolRegistrar[] = [];
+const registrars: ToolRegistrar[] = [registerReadTools];
 
 export const SERVER_INFO = { name: 'podium-mcp', version: '0.1.0' } as const;
 
