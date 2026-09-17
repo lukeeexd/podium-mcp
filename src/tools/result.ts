@@ -1,4 +1,5 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 import { PodiumError } from '../podium/errors.js';
 
 function asStructured(data: unknown): Record<string, unknown> {
@@ -31,3 +32,8 @@ export async function run(
     return fail(err instanceof Error ? err.message : String(err));
   }
 }
+
+export const CONFIRM_DESCRIPTION =
+  'Must be exactly true. This action changes live state. Ask the user for explicit confirmation before calling with confirm=true.';
+
+export const confirmSchema = z.literal(true, { error: 'confirm must be exactly true' }).describe(CONFIRM_DESCRIPTION);
