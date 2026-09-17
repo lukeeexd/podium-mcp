@@ -31,8 +31,8 @@ describe('PodiumClient core', () => {
   it('appends only defined query params', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}));
     const client = new TestClient({ baseUrl: BASE, timeoutMs: 1000 }, fetchMock as unknown as typeof fetch);
-    await client.call('GET', '/api/streams', { query: { q: 'espn', limit: 5, flag: true, skip: undefined } });
-    expect(fetchMock.mock.calls[0]![0]).toBe(`${BASE}/api/streams?q=espn&limit=5&flag=true`);
+    await client.call('GET', '/api/streams', { query: { q: 'news', limit: 5, flag: true, skip: undefined } });
+    expect(fetchMock.mock.calls[0]![0]).toBe(`${BASE}/api/streams?q=news&limit=5&flag=true`);
   });
 
   it('sends a bearer token when configured', async () => {

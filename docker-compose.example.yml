@@ -6,6 +6,8 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"                          # host:container; change the host side if 8080 is taken
+    # Uncomment to read the variables below from a .env file (copy .env.example to .env).
+    # env_file: .env
     environment:
       # Required. Base URL of your Podium instance as reachable from this container.
       PODIUM_URL: "http://podium.example:3000"

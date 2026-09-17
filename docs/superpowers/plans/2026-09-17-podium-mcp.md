@@ -1,5 +1,7 @@
 # Podium MCP Server Implementation Plan
 
+> **Historical document.** This plan guided the initial implementation. Where it differs from the code, the code is authoritative.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a public, self-hosted MCP server in TypeScript that exposes Podium's HTTP API as typed MCP tools, shipped as a multi-arch Docker image via GitHub Actions.

@@ -20,7 +20,7 @@ other detail of the author's setup.
 |---|---|
 | Language | TypeScript, Node 22, official `@modelcontextprotocol/sdk` |
 | Transports | Both streamable HTTP (default) and stdio, chosen by env var |
-| Tool surface | Curated set of 17 default tools plus 2 opt-in destructive tools |
+| Tool surface | Curated set of 24 default tools (13 read-only, 11 actions) plus 2 opt-in destructive tools |
 | Confirmation | Required `confirm: true` argument on destructive tools; MCP annotations on all tools |
 | Secrets | Secret-kind settings never written through the server; effective map stripped of secret keys |
 | Distribution | GitHub Actions publishes multi-arch (amd64, arm64) image to GHCR on `v*` tags |

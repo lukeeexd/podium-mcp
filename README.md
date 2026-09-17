@@ -11,14 +11,19 @@ You run it yourself, next to your own Podium instance. Nothing is hosted.
 
 ```bash
 docker run -d --name podium-mcp \
-  -p 8080:8080 \
+  -p 127.0.0.1:8080:8080 \
   -e PODIUM_URL=http://<podium-host>:<port> \
   -e MCP_AUTH_TOKEN=change-me \
   ghcr.io/OWNER/podium-mcp:latest
 ```
 
-Or copy `docker-compose.example.yml` to `docker-compose.yml`, edit the values,
-and run `docker compose up -d`.
+Bind the published port to a specific interface (`127.0.0.1` above) unless you
+intend to expose the server to your LAN, and set `MCP_AUTH_TOKEN` if you do.
+
+Or copy `.env.example` to `.env`, fill it in, and run
+`docker run --env-file .env ...` instead of repeating `-e` flags. Alternatively
+copy `docker-compose.example.yml` to `docker-compose.yml`, edit the values (or
+add `env_file: .env`), and run `docker compose up -d`.
 
 Check it is up: `curl http://localhost:8080/healthz` returns `{"ok":true}`.
 
@@ -34,6 +39,10 @@ Check it is up: `curl http://localhost:8080/healthz` returns `{"ok":true}`.
 | `MCP_AUTH_TOKEN` | no | — | Bearer token clients must send to `/mcp`. Set this if the port is reachable beyond localhost |
 | `PODIUM_MCP_ENABLE_DESTRUCTIVE` | no | `false` | Register `podium_backup` and `podium_reset_state` |
 | `LOG_LEVEL` | no | `info` | `debug`, `info`, `warn`, `error` |
+
+The image `EXPOSE`s 8080, so if you change `MCP_PORT` you must change the
+container side of the port mapping to match (for example
+`-p 127.0.0.1:9000:9000` with `MCP_PORT=9000`).
 
 ## Connecting a client
 

@@ -21,7 +21,7 @@ describe('PodiumClient reads', () => {
     ['dead', (c) => c.dead(), '/api/dead'],
     ['state', (c) => c.state(), '/api/state'],
     ['state refresh', (c) => c.state(true), '/api/state?refresh=1'],
-    ['searchStreams', (c) => c.searchStreams('espn'), '/api/streams?q=espn'],
+    ['searchStreams', (c) => c.searchStreams('news'), '/api/streams?q=news'],
     ['streamGroups', (c) => c.streamGroups(), '/api/stream-groups'],
     ['getOrdering', (c) => c.getOrdering(), '/api/ordering'],
     ['qualityProfile min', (c) => c.qualityProfile({ minSamples: 3 }), '/api/quality-profile?minSamples=3'],
