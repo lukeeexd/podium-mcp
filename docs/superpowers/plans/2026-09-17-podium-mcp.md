@@ -3500,8 +3500,8 @@ Standard MIT text with `Copyright (c) 2026 podium-mcp contributors`.
 
 - [ ] **Step 4: Scan the repo for leaked private details**
 
-Run: `git grep -nIE '192\.168\.|10\.[0-9]+\.[0-9]+\.|:3456|:9191|Cotton|madnet|silk' -- . ':!docs/superpowers/plans' ':!docs/superpowers/specs'`
-Expected: no output. If anything matches, remove it before committing.
+Run: `git grep -nIE '(192\.168|10|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+' -- . ':!docs/superpowers'`  then also grep for any provider names, group names or ports from your own setup.
+Expected: no output. If anything matches, remove it before committing. The private-IP regex is generic on purpose; the plan itself must never list the author's real values.
 
 - [ ] **Step 5: Commit**
 
