@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fail, ok, run } from '../../src/tools/result.js';
+import { MAX_TEXT_BYTES, fail, ok, run } from '../../src/tools/result.js';
 import { PodiumError } from '../../src/podium/errors.js';
 
 describe('result helpers', () => {
@@ -10,7 +10,19 @@ describe('result helpers', () => {
     expect(r.content).toHaveLength(1);
     const text = (r.content[0] as { text: string }).text;
     expect(text.startsWith('Summary\n')).toBe(true);
-    expect(text).toContain('"a": 1');
+    expect(text).toContain('"a":1');
+  });
+
+  it('ok truncates oversized JSON text but keeps structuredContent complete', async () => {
+    const big = { blob: 'x'.repeat(MAX_TEXT_BYTES + 5_000) };
+    const r = ok(big, 'Summary');
+    const text = (r.content[0] as { text: string }).text;
+    expect(text).toContain('[truncated:');
+    expect(text).toContain('full payload is in structuredContent');
+    // 'Summary\n' + MAX_TEXT_BYTES of JSON + the marker line.
+    expect(text.length).toBeLessThan(MAX_TEXT_BYTES + 200);
+    expect(r.structuredContent).toEqual(big);
+    expect((r.structuredContent as typeof big).blob.length).toBe(MAX_TEXT_BYTES + 5_000);
   });
 
   it('ok wraps non-object data in { result }', () => {

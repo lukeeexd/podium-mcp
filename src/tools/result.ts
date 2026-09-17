@@ -9,9 +9,21 @@ function asStructured(data: unknown): Record<string, unknown> {
   return { result: data };
 }
 
+/**
+ * Longest JSON text copied into the `content` block. Past this the text is truncated and the
+ * caller is pointed at `structuredContent`, which always holds the complete payload.
+ */
+export const MAX_TEXT_BYTES = 100_000;
+
 export function ok(data: unknown, summary: string): CallToolResult {
+  // JSON.stringify returns undefined for undefined; keep the text a string either way.
+  const json = JSON.stringify(data) ?? 'null';
+  const text =
+    json.length > MAX_TEXT_BYTES
+      ? `${json.slice(0, MAX_TEXT_BYTES)}\n…[truncated: ${json.length - MAX_TEXT_BYTES} more characters; full payload is in structuredContent]`
+      : json;
   return {
-    content: [{ type: 'text', text: `${summary}\n${JSON.stringify(data, null, 2)}` }],
+    content: [{ type: 'text', text: `${summary}\n${text}` }],
     structuredContent: asStructured(data),
   };
 }

@@ -21,8 +21,15 @@ export interface HttpDeps {
   sessionTtlMs?: number;
 }
 
-/** The Express app, plus a hook so the idle sweep can be triggered deterministically in tests. */
-export type HttpApp = express.Express & { sweepSessions: (now?: number) => void };
+/**
+ * The Express app, plus two diagnostic hooks: `sweepSessions` triggers the idle sweep
+ * deterministically, and `liveTransportCount` reports transports created but not yet closed.
+ * Both exist for tests and debugging; neither is part of the MCP surface.
+ */
+export type HttpApp = express.Express & {
+  sweepSessions: (now?: number) => void;
+  liveTransportCount: () => number;
+};
 
 interface Session {
   transport: StreamableHTTPServerTransport;
@@ -64,6 +71,11 @@ export function createHttpApp(deps: HttpDeps): HttpApp {
   const ttlMs = deps.sessionTtlMs ?? DEFAULT_SESSION_TTL_MS;
   const sessions = new Map<string, Session>();
 
+  // Diagnostic only: transports created minus transports whose onclose has fired. A rejected
+  // initialize never reaches `sessions`, so this is what proves such a transport was closed.
+  let liveTransports = 0;
+  app.liveTransportCount = (): number => liveTransports;
+
   function closeSession(id: string, session: Session, reason: string): void {
     sessions.delete(id);
     log.debug('session closed', { id, reason });
@@ -90,6 +102,9 @@ export function createHttpApp(deps: HttpDeps): HttpApp {
     const existing = sessionId ? sessions.get(sessionId) : undefined;
     if (existing) existing.lastSeen = Date.now();
     let transport = existing?.transport;
+    // Set only when THIS request created the transport, so the cleanup below can tell a
+    // brand-new transport apart from one that already belongs to a registered session.
+    let fresh: StreamableHTTPServerTransport | undefined;
 
     if (!transport) {
       if (req.method !== 'POST' || !isInitializeRequest(req.body)) {
@@ -116,7 +131,9 @@ export function createHttpApp(deps: HttpDeps): HttpApp {
           log.debug('session closed', { id, reason: 'client delete' });
         },
       });
+      liveTransports += 1;
       created.onclose = () => {
+        liveTransports -= 1;
         if (created.sessionId) sessions.delete(created.sessionId);
       };
       created.onerror = (e) => log.debug('transport error', e instanceof Error ? e.message : e);
@@ -125,6 +142,7 @@ export function createHttpApp(deps: HttpDeps): HttpApp {
       // The shapes are otherwise identical, so cast at the boundary.
       await deps.buildServer().connect(created as Transport);
       transport = created;
+      fresh = created;
     }
 
     try {
@@ -138,6 +156,15 @@ export function createHttpApp(deps: HttpDeps): HttpApp {
       const id = transport.sessionId;
       const session = id ? sessions.get(id) : undefined;
       if (session) session.lastSeen = Date.now();
+      // The SDK can reject an initialize before it ever assigns a session id (406 when the
+      // client does not accept text/event-stream, 415 on the wrong content type, and so on).
+      // Such a transport is in no map, so nothing else would ever close it: close it here, or
+      // its McpServer and any timers leak and it escapes both the cap and the sweeper.
+      if (fresh && (fresh.sessionId === undefined || !sessions.has(fresh.sessionId))) {
+        await fresh.close().catch((e: unknown) => {
+          log.debug('unregistered transport close failed', e instanceof Error ? e.message : e);
+        });
+      }
     }
   });
 

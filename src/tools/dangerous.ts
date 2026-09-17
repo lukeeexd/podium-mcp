@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { ToolRegistrar } from '../server.js';
-import { confirmSchema, fail, run } from './result.js';
+import { CONFIRM_DESCRIPTION, confirmSchema, fail, run } from './result.js';
 
 const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false } as const;
 
@@ -16,7 +16,7 @@ export const registerDangerousTools: ToolRegistrar = (server, { client, config }
       inputSchema: {
         action: z.enum(['export', 'restore']),
         backupJson: z.string().optional().describe('Required for restore: the JSON text of a podium-backup document'),
-        confirm: z.literal(true).optional().describe('Required (true) for restore'),
+        confirm: z.literal(true).optional().describe(`${CONFIRM_DESCRIPTION} Required for action=restore.`),
       },
       annotations: DESTRUCTIVE,
     },

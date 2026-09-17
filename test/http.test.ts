@@ -88,6 +88,46 @@ describe('http transport', () => {
     expect(res.status).toBe(401);
   });
 
+  it('closes the transport when the SDK rejects an initialize', async () => {
+    const client = mockClient();
+    const cfg = testConfig();
+    const app = createHttpApp({ buildServer: () => buildServer(client, cfg) });
+    server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, () => resolve(s));
+    });
+    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    const body = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '0' } },
+    });
+
+    expect(app.liveTransportCount()).toBe(0);
+
+    // No `accept: text/event-stream`, so the SDK answers 406 before assigning a session id.
+    const rejected = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body,
+    });
+    expect(rejected.status).toBeGreaterThanOrEqual(400);
+    expect(rejected.status).toBeLessThan(500);
+    await rejected.body?.cancel();
+    // The transport never reached `sessions`, so only the explicit cleanup can have closed it.
+    expect(app.liveTransportCount()).toBe(0);
+
+    const accepted = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      body,
+    });
+    expect(accepted.status).toBe(200);
+    expect(accepted.headers.get('mcp-session-id')).toBeTruthy();
+    await accepted.body?.cancel();
+    expect(app.liveTransportCount()).toBe(1);
+  });
+
   it('sweeps idle sessions so an abandoned session id stops working', async () => {
     const client = mockClient();
     const cfg = testConfig();

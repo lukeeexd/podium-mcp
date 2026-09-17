@@ -5,13 +5,22 @@ import { run } from './result.js';
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
+/** What a secret field's value and default are replaced with, whatever upstream sent. */
+const MASK = '••••';
+
 export function stripSecrets(settings: SettingsResponse): SettingsResponse {
-  const secretKeys = new Set(settings.fields.filter((f) => f.kind === 'secret').map((f) => f.key));
+  const allFields = settings.fields ?? [];
+  const secretKeys = new Set(allFields.filter((f) => f.kind === 'secret').map((f) => f.key));
+  // Podium is expected to mask secrets already, but never trust that: re-mask here so a
+  // misconfigured or older Podium cannot hand a real credential to the model.
+  const fields = allFields.map((f) =>
+    f.kind === 'secret' ? { ...f, value: MASK, defaultValue: MASK } : f,
+  );
   const effective: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(settings.effective ?? {})) {
     if (!secretKeys.has(k)) effective[k] = v;
   }
-  return { ...settings, effective };
+  return { ...settings, fields, effective };
 }
 
 export const registerReadTools: ToolRegistrar = (server, { client }) => {

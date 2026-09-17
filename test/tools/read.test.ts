@@ -92,6 +92,28 @@ describe('read tools', () => {
     await mcp.close();
   });
 
+  it('podium_get_settings masks secret field values even when Podium sends them unmasked', async () => {
+    const client = mockClient({
+      getSettings: {
+        fields: [
+          { key: 'DISPATCHARR_URL', kind: 'string', value: 'http://x', defaultValue: 'http://y' },
+          { key: 'DISPATCHARR_API_KEY', kind: 'secret', value: 'realsecret', defaultValue: 'realdefault' },
+        ],
+        effective: { DISPATCHARR_URL: 'http://x' },
+      },
+    });
+    const mcp = await connect(client);
+    const r = await mcp.callTool({ name: 'podium_get_settings', arguments: {} });
+    const serialised = JSON.stringify(r.structuredContent);
+    for (const secret of ['realsecret', 'realdefault']) {
+      expect(textOf(r)).not.toContain(secret);
+      expect(serialised).not.toContain(secret);
+    }
+    // Non-secret fields are untouched.
+    expect(serialised).toContain('http://y');
+    await mcp.close();
+  });
+
   it('returns isError when Podium fails', async () => {
     const { PodiumError } = await import('../../src/podium/errors.js');
     const client = mockClient({
