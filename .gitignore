@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.env
+*.tgz
+
+# Local design/planning docs, not published
+docs/superpowers/
+.superpowers/

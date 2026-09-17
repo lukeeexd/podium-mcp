@@ -1,0 +1,22 @@
+# Copy to docker-compose.yml and edit the environment values.
+services:
+  podium-mcp:
+    image: ghcr.io/OWNER/podium-mcp:latest   # replace OWNER, or use `build: .`
+    container_name: podium-mcp
+    restart: unless-stopped
+    ports:
+      - "8080:8080"                          # host:container; change the host side if 8080 is taken
+    # Uncomment to read the variables below from a .env file (copy .env.example to .env).
+    # env_file: .env
+    environment:
+      # Required. Base URL of your Podium instance as reachable from this container.
+      PODIUM_URL: "http://podium.example:3000"
+      # Optional. Bearer token to send to Podium if you front it with an authenticating proxy.
+      # PODIUM_TOKEN: ""
+      # Optional. Bearer token clients must present to this MCP server. Strongly recommended if
+      # the port is reachable from anywhere other than localhost.
+      # MCP_AUTH_TOKEN: "change-me"
+      # Optional. Register the backup-restore and state-reset tools. Off by default.
+      PODIUM_MCP_ENABLE_DESTRUCTIVE: "false"
+      # Optional. debug | info | warn | error
+      LOG_LEVEL: "info"
