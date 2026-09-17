@@ -1,5 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { vi, type Mock } from 'vitest';
 import type { Config } from '../src/config.js';
@@ -39,8 +40,30 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
   };
 }
 
+// @modelcontextprotocol/sdk 1.30's McpServer only wires up the tools/list and
+// tools/call request handlers the first time a tool is registered (see
+// McpServer#setToolRequestHandlers, guarded by _toolHandlersInitialized). A
+// server built by buildServer() with zero registrars (as in Task 6, before
+// any tool group exists) therefore has no tools/list handler at all, and
+// `listTools()` fails with "Method not found" instead of returning `[]`.
+// Work around it here, in the test harness only, by registering-then-removing
+// a throwaway tool to force that one-time wiring — but only when the server
+// has no registered tools yet, so this is a no-op (and never runs) once
+// Task 7 registers the first real tool group. Delete this once that lands.
+function ensureToolHandlersWired(server: McpServer): void {
+  const registered = (server as unknown as { _registeredTools?: Record<string, unknown> })._registeredTools;
+  if (registered && Object.keys(registered).length > 0) return;
+  try {
+    server.registerTool('__bootstrap__', {}, async () => ({ content: [] })).remove();
+  } catch {
+    // Handlers are already wired (or something else claimed this name) —
+    // either way there is nothing further to do.
+  }
+}
+
 export async function connect(client: PodiumClient, config: Partial<Config> = {}): Promise<Client> {
   const server = buildServer(client, testConfig(config));
+  ensureToolHandlersWired(server);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const mcp = new Client({ name: 'test-client', version: '0.0.0' });
