@@ -18,6 +18,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 USER node
 EXPOSE 8080
+# stdio transport has no HTTP endpoint to probe; treat it as a healthy no-op.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD [ "$MCP_TRANSPORT" = "http" ] && wget -qO- "http://127.0.0.1:${MCP_PORT}/healthz" > /dev/null || exit 1
+  CMD if [ "$MCP_TRANSPORT" != "http" ]; then exit 0; fi; wget -qO- "http://127.0.0.1:${MCP_PORT}/healthz" > /dev/null || exit 1
 CMD ["node", "dist/index.js"]
