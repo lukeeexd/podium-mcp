@@ -4,7 +4,7 @@ import { connect, mockClient, textOf } from '../helpers.js';
 const READ_TOOLS = [
   'podium_health', 'podium_stats', 'podium_progress', 'podium_dead', 'podium_state',
   'podium_search_streams', 'podium_stream_groups', 'podium_get_ordering', 'podium_quality_profile',
-  'podium_rule_status', 'podium_name_noise', 'podium_get_settings', 'podium_teamarr_status',
+  'podium_rule_status', 'podium_name_noise', 'podium_get_settings', 'podium_teamarr_status', 'podium_connect_status',
 ];
 
 describe('read tools', () => {
@@ -28,6 +28,23 @@ describe('read tools', () => {
     expect(client.health).toHaveBeenCalledOnce();
     expect(r.structuredContent).toEqual({ status: 'ok', worker: 'active', heartbeatAgeSeconds: 2 });
     expect(textOf(r)).toMatch(/ok/);
+    await mcp.close();
+  });
+
+  it('podium_health names the Podium version when reported', async () => {
+    const client = mockClient({ health: { status: 'ok', version: '1.16.0', worker: 'active' } });
+    const mcp = await connect(client);
+    const r = await mcp.callTool({ name: 'podium_health', arguments: {} });
+    expect(textOf(r).split('\n')[0]).toBe('Podium health (Podium 1.16.0)');
+    await mcp.close();
+  });
+
+  it('podium_connect_status calls client.connectStatus', async () => {
+    const client = mockClient({ connectStatus: { state: 'listening', enabled: true } });
+    const mcp = await connect(client);
+    const r = await mcp.callTool({ name: 'podium_connect_status', arguments: {} });
+    expect(client.connectStatus).toHaveBeenCalledOnce();
+    expect(r.structuredContent).toEqual({ state: 'listening', enabled: true });
     await mcp.close();
   });
 

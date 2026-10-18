@@ -31,7 +31,7 @@ const registrars: ToolRegistrar[] = [
   registerDangerousTools,
 ];
 
-export const SERVER_INFO = { name: 'podium-mcp', version: '0.1.0' } as const;
+export const SERVER_INFO = { name: 'podium-mcp', version: '0.2.0' } as const;
 
 export function buildServer(client: PodiumClient, config: Config): McpServer {
   const server = new McpServer(SERVER_INFO);

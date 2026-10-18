@@ -71,6 +71,12 @@ describe('PodiumClient writes', () => {
     });
   });
 
+  it('applyOrdering forwards pruned', async () => {
+    const { client, calledWith } = make();
+    await client.applyOrdering(3, { order: [9], allowAssign: true, pruned: [7] });
+    expect(calledWith()).toMatchObject({ body: '{"order":[9],"allowAssign":true,"pruned":[7]}' });
+  });
+
   it('unassignStream', async () => {
     const { client, calledWith } = make();
     await client.unassignStream(3, 42);
@@ -79,8 +85,12 @@ describe('PodiumClient writes', () => {
 
   it('saveRules', async () => {
     const { client, calledWith } = make();
-    await client.saveRules(3, { aliases: ['x'], minResolution: '720p' });
-    expect(calledWith()).toMatchObject({ url: '/api/rules/3', method: 'PUT', body: '{"aliases":["x"],"minResolution":"720p"}' });
+    await client.saveRules(3, { aliases: ['x'], contains: [], exclude: [], minResolution: '720p', maxResolution: null });
+    expect(calledWith()).toMatchObject({
+      url: '/api/rules/3',
+      method: 'PUT',
+      body: '{"aliases":["x"],"contains":[],"exclude":[],"minResolution":"720p","maxResolution":null}',
+    });
   });
 
   it('clearRulePatterns', async () => {
@@ -91,18 +101,24 @@ describe('PodiumClient writes', () => {
 
   it('setGroup', async () => {
     const { client, calledWith } = make();
-    await client.setGroup(5, { mode: 'worker', measureOnly: true });
-    expect(calledWith()).toMatchObject({ url: '/api/groups/5', method: 'PUT', body: '{"mode":"worker","measureOnly":true}' });
+    await client.setGroup(5, { mode: 'never', measureOnly: true });
+    expect(calledWith()).toMatchObject({ url: '/api/groups/5', method: 'PUT', body: '{"mode":"never","measureOnly":true}' });
   });
 
   it('setGroupPattern', async () => {
     const { client, calledWith } = make();
-    await client.setGroupPattern({ pattern: 'Sports*', mode: 'measure', measureOnly: false });
+    await client.setGroupPattern({ pattern: 'Sports*', mode: 'assigned', measureOnly: false });
     expect(calledWith()).toMatchObject({
       url: '/api/group-patterns',
       method: 'PUT',
-      body: '{"pattern":"Sports*","mode":"measure","measureOnly":false}',
+      body: '{"pattern":"Sports*","mode":"assigned","measureOnly":false}',
     });
+  });
+
+  it('deleteGroupPattern sends the pattern as a query parameter', async () => {
+    const { client, calledWith } = make();
+    await client.deleteGroupPattern('UK Sports*');
+    expect(calledWith()).toMatchObject({ url: '/api/group-patterns?pattern=UK+Sports*', method: 'DELETE', body: undefined });
   });
 
   it('setOrdering', async () => {
