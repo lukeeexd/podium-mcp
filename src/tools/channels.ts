@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ToolRegistrar } from '../server.js';
-import { confirmSchema, run } from './result.js';
+import { confirmSchema, defined, run } from './result.js';
+import { matchScope } from './schemas.js';
 
 const ACTION = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const;
 const DESTRUCTIVE = { ...ACTION, destructiveHint: true } as const;
@@ -10,17 +11,18 @@ export const registerChannelTools: ToolRegistrar = (server, { client }) => {
     'podium_preview_channel',
     {
       title: 'Preview channel matching',
-      description: 'Dry-run stream matching for a channel with the given rules. Changes nothing.',
+      description:
+        "Dry-run stream matching for a channel with the given rules. Changes nothing. Omitted scope fields fall back to the channel's stored rule. The result includes aliasSources and groupCounts showing where each alias matches before scoping.",
       inputSchema: {
         channelId: z.number().int(),
         aliases: z.array(z.string()).default([]),
         contains: z.array(z.string()).default([]),
         exclude: z.array(z.string()).default([]),
-        providers: z.array(z.string()).default([]),
+        ...matchScope,
       },
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
-    (args) => run(`Preview for channel ${args.channelId}`, () => client.preview(args)),
+    (args) => run(`Preview for channel ${args.channelId}`, () => client.preview(defined(args))),
   );
 
   server.registerTool(
@@ -49,13 +51,17 @@ export const registerChannelTools: ToolRegistrar = (server, { client }) => {
         removeUnmatched: z.boolean().default(false),
         force: z.boolean().default(false),
         allowAssign: z.boolean().default(false),
+        pruned: z
+          .array(z.number().int())
+          .optional()
+          .describe('Copy the pruned list from podium_check_channel. With allowAssign, those streams are dropped instead of kept on the channel'),
         confirm: confirmSchema,
       },
       annotations: DESTRUCTIVE,
     },
-    ({ channelId, order, removeUnmatched, force, allowAssign }) =>
+    ({ channelId, order, removeUnmatched, force, allowAssign, pruned }) =>
       run(`Applied ordering to channel ${channelId}`, () =>
-        client.applyOrdering(channelId, { order, removeUnmatched, force, allowAssign }),
+        client.applyOrdering(channelId, defined({ order, removeUnmatched, force, allowAssign, pruned })),
       ),
   );
 

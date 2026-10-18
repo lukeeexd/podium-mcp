@@ -49,3 +49,15 @@ export const CONFIRM_DESCRIPTION =
   'Must be exactly true. This action changes live state. Ask the user for explicit confirmation before calling with confirm=true.';
 
 export const confirmSchema = z.literal(true, { error: 'confirm must be exactly true' }).describe(CONFIRM_DESCRIPTION);
+
+type MaybeUndefinedKeys<T> = { [K in keyof T]-?: undefined extends T[K] ? K : never }[keyof T];
+
+/** `T` with every key that may hold undefined made optional and undefined-free (exactOptionalPropertyTypes). */
+export type Defined<T> = { [K in Exclude<keyof T, MaybeUndefinedKeys<T>>]: T[K] } & {
+  [K in MaybeUndefinedKeys<T>]?: Exclude<T[K], undefined>;
+};
+
+/** Drop keys whose value is undefined, so Podium keeps what it has stored for them. */
+export function defined<T extends Record<string, unknown>>(obj: T): Defined<T> {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Defined<T>;
+}

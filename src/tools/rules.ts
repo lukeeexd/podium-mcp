@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ToolRegistrar } from '../server.js';
-import { fail, run } from './result.js';
+import { defined, fail, run } from './result.js';
+import { matchScope, resolution } from './schemas.js';
 
 const ACTION = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
@@ -9,21 +10,29 @@ export const registerRulesTools: ToolRegistrar = (server, { client }) => {
     'podium_rules',
     {
       title: 'Save or clear channel match rules',
-      description: 'action=save stores aliases/contains/exclude/providers/minResolution rules for a channel. action=clear removes the channel patterns.',
+      description:
+        'action=save stores match rules for a channel. aliases, contains and exclude are required on save and REPLACE the stored lists, so read the current values from podium_state first and pass them back unchanged if you are only changing other fields. Every other field keeps its stored value when omitted. action=clear removes the channel patterns.',
       inputSchema: {
         action: z.enum(['save', 'clear']),
         channelId: z.number().int(),
-        aliases: z.array(z.string()).optional(),
-        contains: z.array(z.string()).optional(),
-        exclude: z.array(z.string()).optional(),
-        providers: z.array(z.string()).optional(),
-        minResolution: z.union([z.string(), z.number()]).optional(),
+        aliases: z.array(z.string()).optional().describe('Required for save. Replaces the stored aliases'),
+        contains: z.array(z.string()).optional().describe('Required for save. Replaces the stored contains lines'),
+        exclude: z.array(z.string()).optional().describe('Required for save. Replaces the stored exclude lines'),
+        ...matchScope,
+        minResolution: resolution('floor', true),
+        maxResolution: resolution('ceiling', true),
       },
       annotations: ACTION,
     },
-    ({ action, channelId, ...rules }) => {
+    ({ action, channelId, aliases, contains, exclude, ...rest }) => {
       if (action === 'clear') return run(`Cleared patterns for channel ${channelId}`, () => client.clearRulePatterns(channelId));
-      const body = Object.fromEntries(Object.entries(rules).filter(([, v]) => v !== undefined));
+      // Podium rewrites all three lists on every save, so an omitted list would silently erase it.
+      if (aliases === undefined || contains === undefined || exclude === undefined) {
+        return Promise.resolve(
+          fail('aliases, contains and exclude are all required for save (pass the current values from podium_state to keep them)'),
+        );
+      }
+      const body = { aliases, contains, exclude, ...defined(rest) };
       return run(`Saved rules for channel ${channelId}`, () => client.saveRules(channelId, body));
     },
   );

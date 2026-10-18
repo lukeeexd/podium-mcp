@@ -126,6 +126,9 @@ export class PodiumClient {
   teamarrStatus(): Promise<Json> {
     return this.request('GET', '/api/teamarr-sync');
   }
+  connectStatus(): Promise<Json> {
+    return this.request('GET', '/api/connect/status');
+  }
 
   // ---- writes ----
   queueRefresh(scope: RefreshScope, groupId?: number): Promise<Json> {
@@ -164,6 +167,9 @@ export class PodiumClient {
   }
   setGroupPattern(body: GroupPatternRequest): Promise<Json> {
     return this.request('PUT', '/api/group-patterns', { json: body });
+  }
+  deleteGroupPattern(pattern: string): Promise<Json> {
+    return this.request('DELETE', '/api/group-patterns', { query: { pattern } });
   }
   setOrdering(body: OrderingRequest): Promise<Json> {
     return this.request('PUT', '/api/ordering', { json: body });

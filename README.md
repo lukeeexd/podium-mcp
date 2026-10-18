@@ -32,7 +32,7 @@ Check it is up: `curl http://localhost:8080/healthz` returns `{"ok":true}`.
 | Variable | Required | Default | Meaning |
 |---|---|---|---|
 | `PODIUM_URL` | yes | — | Base URL of your Podium instance |
-| `PODIUM_TOKEN` | no | — | Bearer token sent to Podium (only if a proxy in front of it needs one) |
+| `PODIUM_TOKEN` | no | — | Bearer token sent to Podium. Set it to Podium's `PODIUM_AUTH_TOKEN` if that is set, or to whatever an authenticating proxy in front of Podium expects |
 | `PODIUM_TIMEOUT_MS` | no | `30000` | Per-request timeout |
 | `MCP_TRANSPORT` | no | `http` | `http` (streamable HTTP) or `stdio` |
 | `MCP_PORT` | no | `8080` | Listen port for HTTP |
@@ -93,7 +93,7 @@ Read-only:
 
 | Tool | What it does |
 |---|---|
-| `podium_health` | Service and worker health |
+| `podium_health` | Service and worker health, and Podium version |
 | `podium_stats` | Stream state counts, provider breakdown, freshness |
 | `podium_progress` | Current or last checker run |
 | `podium_dead` | Dead, black and orphan streams |
@@ -106,18 +106,20 @@ Read-only:
 | `podium_name_noise` | Name-noise detector output |
 | `podium_get_settings` | Settings (secrets masked and removed from the effective map) |
 | `podium_teamarr_status` | Teamarr sync status |
+| `podium_connect_status` | Dispatcharr Connect event intake state and recent deliveries |
 
 Actions:
 
 | Tool | What it does | Guard |
 |---|---|---|
 | `podium_refresh` | Queue or cancel a check run | — |
-| `podium_preview_channel` | Dry-run stream matching | none needed |
+| `podium_preview_channel` | Dry-run stream matching, including group filters and per-alias scope | none needed |
 | `podium_check_channel` | Probe one channel's streams | — |
-| `podium_apply_ordering` | Apply a stream order in Dispatcharr | `confirm: true` |
+| `podium_apply_ordering` | Apply a stream order in Dispatcharr; pass the check's `pruned` list along | `confirm: true` |
 | `podium_unassign_stream` | Remove a stream from a channel | `confirm: true` |
-| `podium_rules` | Save or clear channel match rules | — |
-| `podium_set_group` | Set group mode by id or name pattern | — |
+| `podium_rules` | Save or clear channel match rules, resolution floor/ceiling and group filters | `aliases`, `contains`, `exclude` required on save |
+| `podium_set_group` | Set a group rule by id or name pattern: mode, measure-only, resolution floor/ceiling, group filter | `mode` required |
+| `podium_delete_group_pattern` | Remove a group-name pattern rule | — |
 | `podium_set_ordering` | Update ordering mode and weights | — |
 | `podium_upload_rules` | Upload a rules JSON file | — |
 | `podium_settings` | Test or save settings; secret keys are refused | — |
@@ -148,8 +150,14 @@ that honour them can prompt appropriately.
   need it, and treat exported backups as sensitive.
 - If `MCP_AUTH_TOKEN` is unset, the server logs a startup warning that `/mcp`
   is unauthenticated. Idle HTTP sessions are closed after 30 minutes.
-- Podium has no endpoint to list group-name patterns, so `podium_set_group`
-  with `target: "pattern"` is write-only.
+- Podium rewrites a channel's aliases, contains and exclude lines on every
+  rule save, and resets a group's mode to `always` when none is sent. That is
+  why `podium_rules` requires those three lists and `podium_set_group`
+  requires `mode`: read the current values with `podium_state` first. Group
+  name patterns are listed there too, under `patterns`.
+
+Built against Podium 1.16.0. Older Podium releases ignore the fields they do
+not know, such as `maxResolution`, group filters and `pruned`.
 
 ## Development
 

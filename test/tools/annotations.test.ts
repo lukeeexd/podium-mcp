@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { connect, mockClient } from '../helpers.js';
 
-const DEFAULT_TOOL_COUNT = 24;
+const DEFAULT_TOOL_COUNT = 26;
 const DESTRUCTIVE_TOOLS = ['podium_backup', 'podium_reset_state'];
 
 describe('tool annotations', () => {

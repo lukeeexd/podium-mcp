@@ -8,9 +8,9 @@ import { buildServer } from '../src/server.js';
 
 const METHODS = [
   'health', 'stats', 'progress', 'dead', 'state', 'searchStreams', 'streamGroups', 'getOrdering',
-  'qualityProfile', 'ruleStatus', 'nameNoise', 'getSettings', 'backup', 'teamarrStatus',
+  'qualityProfile', 'ruleStatus', 'nameNoise', 'getSettings', 'backup', 'teamarrStatus', 'connectStatus',
   'queueRefresh', 'cancelRefresh', 'preview', 'checkChannel', 'applyOrdering', 'unassignStream',
-  'saveRules', 'clearRulePatterns', 'setGroup', 'setGroupPattern', 'setOrdering', 'uploadRules',
+  'saveRules', 'clearRulePatterns', 'setGroup', 'setGroupPattern', 'deleteGroupPattern', 'setOrdering', 'uploadRules',
   'testSettings', 'saveSettings', 'teamarrSync', 'teamarrSyncTest', 'restoreBackup', 'resetState',
 ] as const;
 

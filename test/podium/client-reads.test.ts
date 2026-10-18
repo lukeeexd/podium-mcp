@@ -36,6 +36,7 @@ describe('PodiumClient reads', () => {
     ['getSettings', (c) => c.getSettings(), '/api/settings'],
     ['backup', (c) => c.backup(), '/api/backup'],
     ['teamarrStatus', (c) => c.teamarrStatus(), '/api/teamarr-sync'],
+    ['connectStatus', (c) => c.connectStatus(), '/api/connect/status'],
   ];
 
   for (const [name, fn, expectedUrl] of cases) {

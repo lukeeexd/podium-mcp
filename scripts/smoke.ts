@@ -20,6 +20,7 @@ const READ_CALLS: Array<{ name: string; args: Record<string, unknown> }> = [
   { name: 'podium_name_noise', args: {} },
   { name: 'podium_get_settings', args: {} },
   { name: 'podium_teamarr_status', args: {} },
+  { name: 'podium_connect_status', args: {} },
   { name: 'podium_preview_channel', args: { channelId: 1 } },
 ];
 

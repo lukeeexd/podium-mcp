@@ -26,8 +26,12 @@ export function stripSecrets(settings: SettingsResponse): SettingsResponse {
 export const registerReadTools: ToolRegistrar = (server, { client }) => {
   server.registerTool(
     'podium_health',
-    { title: 'Podium health', description: 'Health of the Podium service and its background worker.', annotations: READ },
-    () => run('Podium health', () => client.health()),
+    { title: 'Podium health', description: 'Health and version of the Podium service and its background worker.', annotations: READ },
+    () =>
+      run((data) => {
+        const version = (data as { version?: unknown }).version;
+        return typeof version === 'string' ? `Podium health (Podium ${version})` : 'Podium health';
+      }, () => client.health()),
   );
 
   server.registerTool(
@@ -140,5 +144,16 @@ export const registerReadTools: ToolRegistrar = (server, { client }) => {
     'podium_teamarr_status',
     { title: 'Teamarr sync status', description: 'Teamarr rules sync configuration and last/next run.', annotations: READ },
     () => run('Teamarr sync status', () => client.teamarrStatus()),
+  );
+
+  server.registerTool(
+    'podium_connect_status',
+    {
+      title: 'Dispatcharr Connect status',
+      description:
+        'Dispatcharr Connect event intake: state (disabled/blocked/pending/error/listening), accepted/rejected counts, last sync, pending events and recent deliveries.',
+      annotations: READ,
+    },
+    () => run('Connect status', () => client.connectStatus()),
   );
 };
