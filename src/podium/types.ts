@@ -33,19 +33,15 @@ export interface GroupFilter {
   excludeGroups?: string[] | undefined;
 }
 
-export interface ExcludeGroupFilter {
-  excludeGroups: string[];
-}
-
 /** Where a channel's matches may come from. Provider IDs are Podium/Dispatcharr M3U account IDs. */
 export interface MatchScope {
   providers?: number[];
   groupFilter?: GroupFilter | null;
-  aliasGroupFilters?: Record<string, ExcludeGroupFilter>;
-  containsGroupFilters?: Record<string, ExcludeGroupFilter>;
+  aliasGroupFilters?: Record<string, GroupFilter>;
+  containsGroupFilters?: Record<string, GroupFilter>;
   aliasProviders?: Record<string, number[]>;
   /** Keyed by alias, then provider ID. */
-  aliasProviderGroupFilters?: Record<string, Record<string, ExcludeGroupFilter>>;
+  aliasProviderGroupFilters?: Record<string, Record<string, GroupFilter>>;
 }
 
 export interface PreviewRequest extends MatchScope {
@@ -70,6 +66,8 @@ export interface RulesRequest extends MatchScope {
   exclude: string[];
   minResolution?: string | null;
   maxResolution?: string | null;
+  /** Refuse FAST (free ad-supported) streams on this channel; null clears the override. */
+  excludeFast?: boolean | null;
 }
 
 export type GroupMode = 'always' | 'never' | 'after_epg_start' | 'assigned';

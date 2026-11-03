@@ -21,6 +21,13 @@ export const registerRulesTools: ToolRegistrar = (server, { client }) => {
         ...matchScope,
         minResolution: resolution('floor', true),
         maxResolution: resolution('ceiling', true),
+        excludeFast: z
+          .boolean()
+          .nullable()
+          .optional()
+          .describe(
+            'true stops this channel claiming FAST (free ad-supported) streams; false allows them; null removes the setting. Omit to keep the stored value. podium_search_streams marks FAST streams with isFast.',
+          ),
       },
       annotations: ACTION,
     },

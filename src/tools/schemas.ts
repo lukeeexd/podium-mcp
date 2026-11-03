@@ -17,16 +17,15 @@ export function resolution(kind: 'floor' | 'ceiling', inheritable: boolean) {
     .describe(`Resolution ${kind}: 720p, 1080p or 2160p (4k). ${clear}. Omit to keep the stored value.`);
 }
 
-export const groupFilter = z
-  .object({
-    includeGroups: globs.optional().describe('Only match streams whose provider group name matches one of these globs'),
-    excludeGroups: globs.optional().describe('Never match streams whose provider group name matches one of these globs'),
-  })
+const groupGlobs = z.object({
+  includeGroups: globs.optional().describe('Only match streams whose provider group name matches one of these globs'),
+  excludeGroups: globs.optional().describe('Never match streams whose provider group name matches one of these globs'),
+});
+
+export const groupFilter = groupGlobs
   .nullable()
   .optional()
   .describe('Provider group filter. null clears it; omit to keep the stored filter.');
-
-const excludeOnly = z.object({ excludeGroups: globs });
 
 /** Fields that narrow where a channel's matches come from. Shared by podium_rules and podium_preview_channel. */
 export const matchScope = {
@@ -36,21 +35,21 @@ export const matchScope = {
     .describe('Provider (M3U account) IDs to restrict matching to, as listed by podium_state. Empty array clears the restriction.'),
   groupFilter,
   aliasGroupFilters: z
-    .record(z.string(), excludeOnly)
+    .record(z.string(), groupGlobs)
     .optional()
-    .describe('Per-alias provider group exclusions, keyed by the exact alias text'),
+    .describe('Per-alias provider group filters, keyed by the exact alias text'),
   containsGroupFilters: z
-    .record(z.string(), excludeOnly)
+    .record(z.string(), groupGlobs)
     .optional()
-    .describe('Per-contains-line provider group exclusions, keyed by the exact line text'),
+    .describe('Per-contains-line provider group filters, keyed by the exact line text'),
   aliasProviders: z
     .record(z.string(), z.array(id))
     .optional()
     .describe('Per-alias provider ID allowlists, keyed by the exact alias text; an alias absent here uses the channel providers'),
   aliasProviderGroupFilters: z
-    .record(z.string(), z.record(z.string(), excludeOnly))
+    .record(z.string(), z.record(z.string(), groupGlobs))
     .optional()
-    .describe('Per-alias, per-provider group exclusions: { alias: { providerId: { excludeGroups } } }'),
+    .describe('Per-alias, per-provider group filters: { alias: { providerId: { includeGroups, excludeGroups } } }'),
 };
 
 export const GROUP_MODES = ['always', 'never', 'after_epg_start', 'assigned'] as const;

@@ -19,6 +19,36 @@ describe('rules, groups and ordering tools', () => {
     await mcp.close();
   });
 
+  it('podium_rules save forwards excludeFast and per-line include filters', async () => {
+    const client = mockClient();
+    const mcp = await connect(client);
+    const fields = {
+      aliases: ['a'], contains: ['b'], exclude: [], excludeFast: true,
+      aliasGroupFilters: { a: { includeGroups: ['UK*'] } },
+      containsGroupFilters: { b: { includeGroups: ['Sports*'], excludeGroups: ['PPV*'] } },
+    };
+    await mcp.callTool({ name: 'podium_rules', arguments: { action: 'save', channelId: 3, ...fields } });
+    expect(client.saveRules).toHaveBeenCalledWith(3, fields);
+    await mcp.close();
+  });
+
+  it('podium_rules save forwards excludeFast null to clear it', async () => {
+    const client = mockClient();
+    const mcp = await connect(client);
+    await mcp.callTool({ name: 'podium_rules', arguments: { action: 'save', channelId: 3, aliases: [], contains: [], exclude: [], excludeFast: null } });
+    expect(client.saveRules).toHaveBeenCalledWith(3, { aliases: [], contains: [], exclude: [], excludeFast: null });
+    await mcp.close();
+  });
+
+  it('podium_rules rejects a non-boolean excludeFast', async () => {
+    const client = mockClient();
+    const mcp = await connect(client);
+    const r = await mcp.callTool({ name: 'podium_rules', arguments: { action: 'save', channelId: 3, aliases: [], contains: [], exclude: [], excludeFast: 'false' } });
+    expect(r.isError).toBe(true);
+    expect(client.saveRules).not.toHaveBeenCalled();
+    await mcp.close();
+  });
+
   it('podium_rules save requires aliases, contains and exclude', async () => {
     const client = mockClient();
     const mcp = await connect(client);
