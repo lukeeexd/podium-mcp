@@ -156,8 +156,10 @@ that honour them can prompt appropriately.
   requires `mode`: read the current values with `podium_state` first. Group
   name patterns are listed there too, under `patterns`.
 
-Built against Podium 1.16.0. Older Podium releases ignore the fields they do
-not know, such as `maxResolution`, group filters and `pruned`.
+Built against Podium 1.17.0. Older Podium releases ignore the fields they do
+not know, such as `maxResolution`, group filters, `pruned` and `excludeFast`;
+before 1.17, per-alias and per-contains group filters keep only
+`excludeGroups`.
 
 ## Development
 

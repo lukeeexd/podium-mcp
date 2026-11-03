@@ -2,7 +2,7 @@
 
 Podium is a provider-aware stream checker and reorderer for Dispatcharr. This
 document describes the HTTP API that `podium-mcp` wraps, as of Podium
-1.16.0 (checked 2026-10-18). It is not official Podium documentation;
+1.17.0 (checked 2026-11-03). It is not official Podium documentation;
 endpoints may change.
 
 - Base URL: your Podium instance, e.g. `http://<podium-host>:<port>`
@@ -37,7 +37,11 @@ Notes:
   `""` or `null` removes the override; on groups, `null` or `""` mean `none`.
 - `providers` and `aliasProviders` values are numeric provider (M3U account)
   IDs. Group filters are `{includeGroups?:[], excludeGroups?:[]}` of globs over
-  provider group names; `null` clears a stored filter.
+  provider group names; `null` clears a stored filter. The per-alias,
+  per-contains and per-alias-provider maps take the same shape (before 1.17
+  Podium kept only `excludeGroups` there).
+- `excludeFast` on a channel rule must be a real boolean (`true` refuses FAST
+  streams on that channel); `null` removes it, anything else is a 400.
 
 ## Read-only (GET)
 
@@ -70,7 +74,7 @@ Notes:
 | `/api/check/{channelId}[?force=true]` | POST | Probe all streams on one channel. Accepts `{}` body. Response includes `probed`, `dead`, whether apply is `allowed`, `pruned` (stream IDs to pass to apply), `minResolution` and `maxResolution` |
 | `/api/apply/{channelId}` | POST | `{order:[streamIds], removeUnmatched, force, allowAssign, pruned:[streamIds]}`. `force:true` needed when the check said `allowed:false`. With `allowAssign`, streams in `pruned` are dropped rather than kept at the tail. Modifies Dispatcharr |
 | `/api/unassign/{channelId}` | POST | `{streamId}`. Modifies Dispatcharr |
-| `/api/rules/{channelId}` | PUT | `{aliases:[], contains:[], exclude:[], providers:[], minResolution, maxResolution, groupFilter, aliasGroupFilters, containsGroupFilters, aliasProviders, aliasProviderGroupFilters}`. Per-alias maps are keyed by exact alias/contains text; `aliasProviderGroupFilters` is keyed by alias then provider ID |
+| `/api/rules/{channelId}` | PUT | `{aliases:[], contains:[], exclude:[], providers:[], minResolution, maxResolution, groupFilter, aliasGroupFilters, containsGroupFilters, aliasProviders, aliasProviderGroupFilters, excludeFast}`. Per-alias maps are keyed by exact alias/contains text; `aliasProviderGroupFilters` is keyed by alias then provider ID |
 | `/api/rules/{channelId}/patterns` | DELETE | Clear the channel's patterns |
 | `/api/groups/{groupId}` | PUT | `{mode, measureOnly, minResolution, maxResolution, groupFilter}`; a floor above the ceiling is a 400 |
 | `/api/group-patterns` | PUT | `{pattern, mode, measureOnly, minResolution, maxResolution, groupFilter}`; no GET |
@@ -80,6 +84,6 @@ Notes:
 | `/api/settings` | PUT | `{KEY: value, ...}`; errors as `{errors:[{key, message}]}` |
 | `/api/settings/test` | POST | Same body as PUT; returns `{ok, providers:[{name, maxStreams, profiles:[{name, maxStreams}]}]}` without saving |
 | `/api/teamarr-sync[?dryRun=1]` | POST | Trigger the Teamarr rules sync |
-| `/api/teamarr-sync/test` | POST | `{ok, byType:{}}` |
+| `/api/teamarr-sync/test` | POST | `{ok, byType:{}}`; `{ok:false, needsEnabled:true, error}` until Teamarr sync is on in saved settings |
 | `/api/backup` | POST | Restore from a full backup document. Replaces configuration |
 | `/api/state/reset` | POST | Clears cache and run history |

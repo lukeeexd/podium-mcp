@@ -26,10 +26,10 @@ describe('channel tools', () => {
     const mcp = await connect(client);
     const scope = {
       groupFilter: { includeGroups: ['UK*'] },
-      aliasGroupFilters: { a: { excludeGroups: ['PPV*'] } },
-      containsGroupFilters: { b: { excludeGroups: ['XXX'] } },
+      aliasGroupFilters: { a: { includeGroups: ['UK*'], excludeGroups: ['PPV*'] } },
+      containsGroupFilters: { b: { includeGroups: ['Sports*'] } },
       aliasProviders: { a: [2, 4] },
-      aliasProviderGroupFilters: { a: { '2': { excludeGroups: ['Backup'] } } },
+      aliasProviderGroupFilters: { a: { '2': { includeGroups: ['Main'], excludeGroups: ['Backup'] } } },
     };
     await mcp.callTool({ name: 'podium_preview_channel', arguments: { channelId: 3, aliases: ['a'], contains: ['b'], ...scope } });
     expect(client.preview).toHaveBeenCalledWith({ channelId: 3, aliases: ['a'], contains: ['b'], exclude: [], ...scope });

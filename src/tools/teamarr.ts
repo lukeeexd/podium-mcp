@@ -7,7 +7,7 @@ export const registerTeamarrTools: ToolRegistrar = (server, { client }) => {
     'podium_teamarr_sync',
     {
       title: 'Teamarr rules sync',
-      description: 'action=sync runs the Teamarr rules sync (dryRun defaults to true; pass dryRun=false to apply). action=test checks Teamarr connectivity.',
+      description: 'action=sync runs the Teamarr rules sync (dryRun defaults to true; pass dryRun=false to apply). action=test checks Teamarr connectivity; Podium refuses it (ok=false, needsEnabled=true) until Teamarr sync is switched on in saved settings.',
       inputSchema: {
         action: z.enum(['sync', 'test']),
         dryRun: z.boolean().default(true).describe('Only for action=sync. Default true.'),
