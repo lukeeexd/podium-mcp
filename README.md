@@ -172,8 +172,9 @@ PODIUM_URL=http://<podium-host>:<port> npm start
 
 `npm run smoke` calls every read tool once against the Podium at `PODIUM_URL`.
 
-Releases: push a tag like `v0.1.0` and GitHub Actions publishes a multi-arch
-image to GHCR and creates a GitHub Release.
+Images: every push to `master` publishes a multi-arch image to GHCR as
+`latest` and `sha-<commit>`. Pushing a tag like `v0.1.0` also publishes the
+`0.1.0` and `0.1` tags and creates a GitHub Release.
 
 ## Licence
 
