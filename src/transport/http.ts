@@ -108,7 +108,13 @@ export function createHttpApp(deps: HttpDeps): HttpApp {
 
     if (!transport) {
       if (req.method !== 'POST' || !isInitializeRequest(req.body)) {
-        res.status(400).json({ jsonrpc: '2.0', error: { code: -32000, message: 'Bad Request: no valid session' }, id: null });
+        // Per the Streamable HTTP spec, an unknown or expired session id gets 404, which tells
+        // the client to re-initialize on its own; a missing id is a plain 400.
+        if (sessionId) {
+          res.status(404).json({ jsonrpc: '2.0', error: { code: -32001, message: 'Session not found' }, id: null });
+        } else {
+          res.status(400).json({ jsonrpc: '2.0', error: { code: -32000, message: 'Bad Request: no valid session' }, id: null });
+        }
         return;
       }
       app.sweepSessions();

@@ -74,6 +74,21 @@ describe('http transport', () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it('returns 404 for a request carrying an unknown session id', async () => {
+    const base = await start();
+    const res = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+        'mcp-session-id': 'no-such-session',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+    });
+    expect(res.status).toBe(404);
+  });
+
   it('rejects /mcp with a wrong bearer token', async () => {
     const base = await start('secret');
     const res = await fetch(`${base}/mcp`, {
@@ -164,6 +179,7 @@ describe('http transport', () => {
       },
       body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
     });
-    expect(after.status).toBe(400);
+    // 404 (not 400) is the spec's signal for the client to start a new session itself.
+    expect(after.status).toBe(404);
   });
 });
