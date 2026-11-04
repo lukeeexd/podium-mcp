@@ -53,7 +53,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' || (startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-')) }}
             type=sha,enable=${{ github.ref == 'refs/heads/master' }}
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
